@@ -1,0 +1,248 @@
+<?php
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['form_name']) && $_POST['form_name'] == 'loginform')
+{
+   $success_page = '';
+   $error_page = basename(__FILE__);
+   $database = './usersdb.php';
+   $crypt_pass = md5($_POST['password']);
+   $found = false;
+   $fullname = '';
+   $session_timeout = 600;
+   if(filesize($database) > 0)
+   {
+      $items = file($database, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+      foreach($items as $line)
+      {
+         list($username, $password, $email, $name, $active) = explode('|', trim($line));
+         if ($username == $_POST['username'] && $active != "0" && $password == $crypt_pass)
+         {
+            $found = true;
+            $fullname = $name;
+         }
+      }
+   }
+   if($found == false)
+   {
+      header('Location: '.$error_page);
+      exit;
+   }
+   else
+   {
+      if (session_id() == "")
+      {
+         session_start();
+      }
+      $_SESSION['username'] = $_POST['username'];
+      $_SESSION['fullname'] = $fullname;
+      $_SESSION['expires_by'] = time() + $session_timeout;
+      $_SESSION['expires_timeout'] = $session_timeout;
+      $rememberme = isset($_POST['rememberme']) ? true : false;
+      if ($rememberme)
+      {
+         setcookie('username', $_POST['username'], time() + 3600*24*30);
+         setcookie('password', $_POST['password'], time() + 3600*24*30);
+      }
+      header('Location: '.$success_page);
+      exit;
+   }
+}
+$username = isset($_COOKIE['username']) ? $_COOKIE['username'] : '';
+$password = isset($_COOKIE['password']) ? $_COOKIE['password'] : '';
+?>
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Untitled Page</title>
+<meta name="generator" content="WYSIWYG Web Builder 12 Trial Version - http://www.wysiwygwebbuilder.com">
+<link href="OVISIUNAD.css" rel="stylesheet">
+<link href="delitosinfor.css" rel="stylesheet">
+<script src="jquery-1.12.4.min.js"></script>
+<script src="./searchindex.js"></script>
+<script>
+var features = 'toolbar=no,menubar=no,location=no,scrollbars=yes,resizable=yes,status=no,left=,top=,width=,height=';
+var searchDatabase = new SearchDatabase();
+var searchResults_length = 0;
+var searchResults = new Object();
+function searchPage(features)
+{
+   var element = document.getElementById('SiteSearch1');
+   if (element.value.length != 0 || element.value != " ")
+   {
+      var value = unescape(element.value);
+      var keywords = value.split(" ");
+      searchResults_length = 0;
+      for (var i=0; i<database_length; i++)
+      {
+         var matches = 0;
+         var words = searchDatabase[i].title + " " + searchDatabase[i].description + " " + searchDatabase[i].keywords;
+         for (var j = 0; j < keywords.length; j++)
+         {
+            var pattern = new RegExp(keywords[j], "i");
+            var result = words.search(pattern);
+            if (result >= 0)
+            {
+               matches++;
+            }
+            else
+            {
+               matches = 0;
+            }
+         }
+         if (matches == keywords.length)
+         {
+            searchResults[searchResults_length++] = searchDatabase[i];
+         }
+      }
+      var wndResults = window.open('about:blank', '', features);
+      setTimeout(function()
+      {
+         var results = '';
+         var html = '<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>Search results<\/title><\/head>';
+         html = html + '<body style="background-color:#FFFFFF;margin:0;padding:2px 2px 2px 2px;">';
+         html = html + '<span style="font-family:Arial;font-size:13px;color:#000000">';
+         for (var n=0; n<searchResults_length; n++)
+         {
+            var page_keywords = searchResults[n].keywords;
+            results = results + '<strong><a style="color:#0000FF" target="_parent" href="'+searchResults[n].url+'">'+searchResults[n].title +'<\/a><\/strong><br>Keywords: ' + page_keywords +'<br><br>\n';
+         }
+         if (searchResults_length == 0)
+         {
+            results = 'No results';
+         }
+         else
+         {
+            html = html + searchResults_length;
+            html = html + ' result(s) found for search term: ';
+            html = html + value;
+            html = html + '<br><br>';
+         }
+         html = html + results;
+         html = html + '<\/span>';
+         html = html + '<\/body><\/html>';
+         wndResults.document.write(html);
+     },100);
+   }
+   return false;
+}
+function searchParseURL()
+{
+   var url = decodeURIComponent(window.location.href);
+   if (url.indexOf('?') > 0)
+   {
+      var terms = '';
+      var params = url.split('?');
+      var values = params[1].split('&');
+      for (var i=0;i<values.length;i++)
+      {
+         var param = values[i].split('=');
+         if (param[0] == 'q')
+         {
+            terms = unescape(param[1]);
+            break;
+         }
+      }
+      if (terms != '')
+      {
+         var element = document.getElementById('SiteSearch1');
+         element.value = terms;
+         searchPage('');
+      }
+   }
+}
+</script>
+<script>
+$(document).ready(function()
+{
+   searchParseURL();
+});
+</script>
+</head>
+<body>
+<a href="http://www.wysiwygwebbuilder.com" target="_blank"><img src="images/builtwithwwb12.png" alt="WYSIWYG Web Builder" style="position:absolute;left:767px;top:1078px;border-width:0;z-index:250"></a>
+<div id="wb_Text6" style="position:absolute;left:236px;top:197px;width:718px;height:364px;text-align:justify;z-index:1;">
+<span style="color:#000000;font-family:'Franklin Gothic Book';font-size:16px;line-height:31px;">Los delitos informáticos son aquellas actividades ilícitas que: (a) Se cometen mediante el uso de computadoras, sistemas informáticos u otros dispositivos de comunicación (la informática es el medio o instrumento para realizar un delito); o (b) Tienen por objeto causar daños, provocar pérdidas o impedir el uso de sistemas informáticos (delitos informáticos).<br><br>Los también conocidos como Ciberdelitos como lo señala Téllez que son actitudes contrarias a los intereses de las personas en que se tiene a las computadoras como instrumento o fin (concepto atípico) o las conductas atípicas, antijurídicas y culpables en que se tiene a las computadoras como instrumento o fin (concepto típico) Julio Téllez, Derecho Informático , 3ª ed.,McGraw-Hill,2004, México,p.7u7<br><br>Mucha información es almacenada en un reducido espacio, con una posibilidad de recuperación inmediata, pero por complejas que sean las medidas de seguridad que se puedan implantar, aún no existe un método infalible de protección.3<br>Más información</span></div>
+<div id="wb_Shape2" style="position:absolute;left:223px;top:785px;width:1098px;height:324px;z-index:2;">
+<img src="images/img0012.png" id="Shape2" alt="" style="width:1098px;height:324px;"></div>
+<div id="wb_Image2" style="position:absolute;left:297px;top:810px;width:225px;height:41px;z-index:3;">
+<img src="images/logoUNADgrisInferior.png" id="Image2" alt=""></div>
+<div id="wb_Image3" style="position:absolute;left:544px;top:893px;width:80px;height:122px;z-index:4;">
+<img src="images/certificado.png" id="Image3" alt=""></div>
+<div id="wb_Image4" style="position:absolute;left:656px;top:893px;width:80px;height:122px;z-index:5;">
+<img src="images/calidad1000.png" id="Image4" alt=""></div>
+<div id="wb_Image6" style="position:absolute;left:760px;top:893px;width:80px;height:122px;z-index:6;">
+<img src="images/calidad9001.png" id="Image6" alt=""></div>
+<div id="wb_Image7" style="position:absolute;left:976px;top:893px;width:80px;height:122px;z-index:7;">
+<img src="images/calidad18001.png" id="Image7" alt=""></div>
+<div id="wb_Image5" style="position:absolute;left:869px;top:893px;width:80px;height:122px;z-index:8;">
+<img src="images/calidad14001.png" id="Image5" alt=""></div>
+<div id="wb_Text2" style="position:absolute;left:604px;top:800px;width:250px;height:60px;z-index:9;">
+<span style="color:#FFFFFF;font-family:'Franklin Gothic Book';font-size:9.3px;">Sede nacional José Celestino Mutis: Calle 14 sur No. 14 - 23<br>PBX:(+57) 1 344 3700 Bogotá D.C., Colombia<br>Línea nacional gratuita desde Colombia: 018000115223<br>Atención al usuario: atencionalusuario@unad.edu.co<br>Anticorrupción: anticorrupcion@unad.edu.co</span></div>
+<div id="wb_Text3" style="position:absolute;left:957px;top:800px;width:250px;height:48px;z-index:10;">
+<span style="color:#FFFFFF;font-family:'Franklin Gothic Book';font-size:9.3px;">490 Sawgrass Corporate Parkway Suite 120, Sunrise, FL 33325<br>Phones (954) 389 2277 - (954) 389 7188<br>Toll Free (877) 385 5124)<br>Fax (954) 667 6200</span></div>
+<div id="wb_Text4" style="position:absolute;left:653px;top:1034px;width:495px;height:12px;z-index:11;">
+<span style="color:#FFFFFF;font-family:'Franklin Gothic Book';font-size:9.3px;">Última actualización ( 2017-11-02 ) © Copyright UNAD 2017&nbsp; - Powered by Jwysiwyg </span></div>
+<div id="wb_Shape5" style="position:absolute;left:1006px;top:207px;width:293px;height:558px;z-index:12;">
+<img src="images/img0013.png" id="Shape5" alt="" style="width:293px;height:558px;"></div>
+<div id="wb_BulletedList1" style="position:absolute;left:1073px;top:569px;width:170px;height:68px;z-index:13;">
+<div>
+   <div class="bullet" style="height:24px;">O</div>
+   <div class="item item0"><span style="color:#FFFFFF;font-family:'Franklin Gothic Book';font-size:16px;line-height:21px;">Noticias</span></div>
+</div>
+<div style="clear:both">
+   <div class="bullet" style="height:22px;">O</div>
+   <div class="item item1"><span style="color:#FFFFFF;font-family:'Franklin Gothic Book';font-size:15px;line-height:18px;">Página Principal</span></div>
+</div>
+<div style="clear:both">
+   <div class="bullet" style="height:22px;">O</div>
+   <div class="item item2"><span style="color:#FFFFFF;font-family:'Franklin Gothic Book';font-size:15px;line-height:18px;">Eventos</span></div>
+</div>
+</div>
+<div id="wb_Login1" style="position:absolute;left:1060px;top:225px;width:191px;height:270px;z-index:14;">
+<form name="loginform" method="post" accept-charset="UTF-8" action="<?php echo basename(__FILE__); ?>" id="loginform">
+<input type="hidden" name="form_name" value="loginform">
+<table id="Login1">
+<tr>
+   <td class="header">Log In</td>
+</tr>
+<tr>
+   <td class="label"><label for="username">User Name</label></td>
+</tr>
+<tr>
+   <td class="row"><input class="input" name="username" type="text" id="username" value="<?php echo $username; ?>"></td>
+</tr>
+<tr>
+   <td class="label"><label for="password">Password</label></td>
+</tr>
+<tr>
+   <td class="row"><input class="input" name="password" type="password" id="password" value="<?php echo $password; ?>"></td>
+</tr>
+<tr>
+   <td class="row"><input id="rememberme" type="checkbox" name="rememberme"><label for="rememberme">Remember me</label></td>
+</tr>
+<tr>
+   <td style="text-align:center;vertical-align:bottom"><input class="button" type="submit" name="login" value="Log In" id="login"></td>
+</tr>
+</table>
+</form>
+</div>
+<div id="wb_Text9" style="position:absolute;left:1027px;top:538px;width:250px;height:21px;z-index:15;">
+<span style="color:#FFFFFF;font-family:'Franklin Gothic Book';font-size:16px;"><strong>Páginas de Interés</strong></span></div>
+<div id="wb_Shape1" style="position:absolute;left:767px;top:0px;width:553px;height:153px;z-index:16;">
+<img src="images/img0014.png" id="Shape1" alt="" style="width:553px;height:153px;"></div>
+<div id="wb_Image1" style="position:absolute;left:252px;top:49px;width:246px;height:51px;z-index:17;">
+<img src="images/logoUNAD.png" id="Image1" alt=""></div>
+<div id="wb_Text1" style="position:absolute;left:949px;top:30px;width:371px;height:88px;text-align:center;z-index:18;">
+<span style="color:#F0B429;font-family:Arial;font-size:37px;"><strong>Delitos<br>Informáticos</strong></span></div>
+<div id="wb_Shape3" style="position:absolute;left:223px;top:152px;width:1098px;height:55px;z-index:19;">
+<img src="images/img0015.png" id="Shape3" alt="" style="width:1098px;height:55px;"></div>
+<input type="button" id="Inicio" onclick="window.location.href='./index.html';return false;" name="Inicio" value="Inicio" style="position:absolute;left:296px;top:153px;width:137px;height:35px;z-index:20;">
+<input type="button" id="Lecturas" onclick="window.location.href='./lecturas.html';return false;" name="Lecturas" value="Lecturas" style="position:absolute;left:445px;top:153px;width:137px;height:35px;z-index:21;">
+<input type="button" id="Multimedia" onclick="window.location.href='./multimedia.html';return false;" name="Multimedia" value="Multimedia" style="position:absolute;left:596px;top:153px;width:137px;height:35px;z-index:22;">
+<input type="button" id="Actividades" onclick="window.location.href='./actividades.html';return false;" name="Actividades" value="Actividades" style="position:absolute;left:743px;top:153px;width:137px;height:35px;z-index:23;">
+<input type="button" id="Autores" onclick="window.location.href='./autores.html';return false;" name="Autores" value="Autores" style="position:absolute;left:891px;top:153px;width:137px;height:35px;z-index:24;">
+<form name="SiteSearch1_form" id="SiteSearch1_form" accept-charset="UTF-8" onsubmit="return searchPage(features)">
+<input type="text" id="SiteSearch1" style="position:absolute;left:1027px;top:157px;width:140px;height:17px;line-height:17px;z-index:25;" name="SiteSearch1" value="" spellcheck="false" placeholder="Search this website"></form>
+<input type="button" id="Button1" onclick="searchPage();return false;" name="Search" value="Search" style="position:absolute;left:1181px;top:158px;width:96px;height:25px;z-index:26;">
+</body>
+</html>
